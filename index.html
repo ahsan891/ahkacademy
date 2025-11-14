@@ -1,0 +1,269 @@
+<!--
+AHK Academy - Single-file website (index.html)
+How to use:
+1. Download this file and name it index.html
+2. Upload to your GitHub repo (Add file -> Upload files) or push with git
+3. Enable GitHub Pages (Settings -> Pages -> Deploy from a branch -> main -> /)
+
+This single file contains HTML, CSS and JavaScript for several simple interactive games:
+- Present Simple Quiz
+- Vocabulary Flashcards
+- Sentence Builder (drag & drop)
+- Matching Pairs
+
+Feel free to edit questions and add your own content.
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AHK Academy — English Games</title>
+  <style>
+    /* Simple responsive styling */
+    :root{--accent:#136f63;--muted:#6b6b6b;--bg:#f6fbfb}
+    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0;background:var(--bg);color:#0b2b2b}
+    header{background:linear-gradient(90deg,var(--accent),#1fa89b);color:white;padding:18px 20px}
+    .container{max-width:980px;margin:24px auto;padding:0 16px}
+    h1{margin:0;font-size:1.6rem}
+    p.lead{color:var(--muted);margin:8px 0 20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    .card{background:white;border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(8,8,8,0.06);min-height:120px}
+    .card h3{margin:0 0 8px;font-size:1.05rem}
+    .btn{display:inline-block;padding:8px 12px;border-radius:10px;border:none;background:var(--accent);color:white;cursor:pointer}
+    footer{color:var(--muted);text-align:center;margin:30px 0}
+
+    /* Game area */
+    .game{margin-top:18px}
+    .hidden{display:none}
+    .choices button{display:block;width:100%;margin:8px 0;padding:10px;border-radius:8px;border:1px solid #e6e6e6;background:#fff;text-align:left}
+    .choices button.correct{border-color:green;background:linear-gradient(90deg,#effff4,#f3fff8)}
+    .choices button.wrong{border-color:#d9534f;background:#fff0f0}
+
+    /* Flashcards */
+    .flashcard{height:160px;display:flex;align-items:center;justify-content:center;border-radius:10px;border:1px dashed #ddd;background:white;font-size:1.3rem}
+
+    /* Drag & drop */
+    .dropzone{min-height:48px;border:2px dashed #ddd;border-radius:8px;padding:8px;margin:8px 0;display:flex;gap:8px;flex-wrap:wrap}
+    .draggable{padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #ddd;cursor:grab}
+
+    /* Matching */
+    .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .match-list{display:flex;flex-direction:column;gap:8px}
+    .chip{padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #eee}
+
+    @media (max-width:520px){h1{font-size:1.2rem}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>AHK Academy — Free English Games</h1>
+      <p class="lead">Interactive games to teach English — copy this file as <code>index.html</code> and upload to GitHub Pages.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="home">
+      <div class="grid">
+        <div class="card">
+          <h3>Present Simple Quiz</h3>
+          <p>Short multiple-choice quiz about present simple verbs.</p>
+          <button class="btn" onclick="openGame('quiz')">Play</button>
+        </div>
+
+        <div class="card">
+          <h3>Vocabulary Flashcards</h3>
+          <p>Flip cards to learn new words with Turkish translations.</p>
+          <button class="btn" onclick="openGame('flash')">Play</button>
+        </div>
+
+        <div class="card">
+          <h3>Sentence Builder (Drag & Drop)</h3>
+          <p>Put words in order to make correct sentences.</p>
+          <button class="btn" onclick="openGame('drag')">Play</button>
+        </div>
+
+        <div class="card">
+          <h3>Matching Pairs</h3>
+          <p>Match the English word with the Turkish meaning.</p>
+          <button class="btn" onclick="openGame('match')">Play</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="quiz" class="game hidden">
+      <button class="btn" onclick="backHome()">← Back</button>
+      <h2>Present Simple Quiz</h2>
+      <div id="quiz-area"></div>
+    </section>
+
+    <!-- FLASHCARDS -->
+    <section id="flash" class="game hidden">
+      <button class="btn" onclick="backHome()">← Back</button>
+      <h2>Vocabulary Flashcards</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        <div style="flex:1;min-width:220px">
+          <div id="flashcard" class="flashcard">Click Next to start</div>
+          <div style="margin-top:8px">
+            <button class="btn" onclick="prevCard()">Prev</button>
+            <button class="btn" onclick="flipCard()">Flip</button>
+            <button class="btn" onclick="nextCard()">Next</button>
+          </div>
+        </div>
+        <div style="flex:1;min-width:220px">
+          <p style="color:var(--muted)">List:</p>
+          <ul id="wordList"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- DRAG & DROP -->
+    <section id="drag" class="game hidden">
+      <button class="btn" onclick="backHome()">← Back</button>
+      <h2>Sentence Builder</h2>
+      <p>Drag the words into the drop area in the correct order.</p>
+      <div id="drag-setup" style="margin-top:10px"></div>
+      <div style="margin-top:10px">
+        <button class="btn" onclick="checkSentence()">Check</button>
+        <button class="btn" onclick="nextSentence()">Next</button>
+      </div>
+      <div id="drag-result" style="margin-top:8px;color:var(--muted)"></div>
+    </section>
+
+    <!-- MATCH -->
+    <section id="match" class="game hidden">
+      <button class="btn" onclick="backHome()">← Back</button>
+      <h2>Matching Pairs</h2>
+      <p>Click an English word then click its Turkish meaning.</p>
+      <div id="match-area" style="margin-top:12px"></div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">Made with ❤️ by AHK Academy — Upload this file to your repository as <code>index.html</code></div>
+  </footer>
+
+<script>
+// === Data ===
+const quizData = [
+  {q: 'She ___ to school every day.', a:['go','goes','going','went'], correct:1, explain:'He/She/It uses -s form.'},
+  {q: 'They ___ football on Sundays.', a:['play','plays','played','playing'], correct:0},
+  {q: 'My brother ___ coffee in the morning.', a:['drink','drinks','drinking','drank'], correct:1}
+];
+
+const flashcards = [
+  {en:'apple', tr:'elma'},
+  {en:'teacher', tr:'öğretmen'},
+  {en:'garden', tr:'bahçe'},
+  {en:'beautiful', tr:'güzel'}
+];
+
+const sentences = [
+  {words:['always','works','She','hard'], correct:'She always works hard.'},
+  {words:['I','tea','like','sometimes'], correct:'I sometimes like tea.'}
+];
+
+const matches = [
+  {en:'book', tr:'kitap'},
+  {en:'chair', tr:'sandalye'},
+  {en:'window', tr:'pencere'}
+];
+
+// === Navigation ===
+function openGame(id){
+  document.querySelectorAll('.game, #home').forEach(el=>el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  if(id==='quiz') startQuiz();
+  if(id==='flash') startFlash();
+  if(id==='drag') startDrag();
+  if(id==='match') startMatch();
+}
+function backHome(){
+  document.querySelectorAll('.game').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('home').classList.remove('hidden');
+}
+
+// === QUIZ ===
+let quizIndex=0;
+function startQuiz(){
+  quizIndex=0; renderQuestion();
+}
+function renderQuestion(){
+  const q = quizData[quizIndex];
+  const area = document.getElementById('quiz-area');
+  area.innerHTML = `<h3>${q.q}</h3><div class='choices'></div>`;
+  const choices = area.querySelector('.choices');
+  q.a.forEach((text, i)=>{
+    const b = document.createElement('button'); b.textContent = text;
+    b.onclick = ()=>{ if(i===q.correct){ b.classList.add('correct'); b.textContent += ' ✓'; } else { b.classList.add('wrong'); b.textContent += ' ✗'; const cbtn = area.querySelectorAll('button')[q.correct]; cbtn.classList.add('correct'); }
+      setTimeout(()=>{
+        quizIndex = (quizIndex+1) % quizData.length; renderQuestion();
+      },700);
+    };
+    choices.appendChild(b);
+  });
+}
+
+// === FLASHCARDS ===
+let fcIndex=0, flipped=false;
+function startFlash(){
+  fcIndex=0; flipped=false; updateFlash(); renderWordList();
+}
+function updateFlash(){
+  const card = document.getElementById('flashcard');
+  card.textContent = flipped ? flashcards[fcIndex].tr : flashcards[fcIndex].en;
+}
+function flipCard(){ flipped = !flipped; updateFlash(); }
+function nextCard(){ fcIndex = (fcIndex+1)%flashcards.length; flipped=false; updateFlash(); }
+function prevCard(){ fcIndex = (fcIndex-1+flashcards.length)%flashcards.length; flipped=false; updateFlash(); }
+function renderWordList(){
+  const ul = document.getElementById('wordList'); ul.innerHTML=''; flashcards.forEach(x=>{ const li=document.createElement('li'); li.textContent = `${x.en} — ${x.tr}`; ul.appendChild(li); });
+}
+
+// === DRAG & DROP ===
+let dragIndex=0;
+function startDrag(){ renderDragSentence(); }
+function renderDragSentence(){
+  const data = sentences[dragIndex];
+  const setup = document.getElementById('drag-setup'); setup.innerHTML='';
+  const drop = document.createElement('div'); drop.className='dropzone'; drop.id='dropzone';
+  setup.appendChild(drop);
+  const shuffled = shuffle([...data.words]);
+  const bank = document.createElement('div'); bank.className='dropzone';
+  shuffled.forEach(w=>{ const s = document.createElement('div'); s.className='draggable'; s.draggable=true; s.textContent=w; s.ondragstart = ev=>{ ev.dataTransfer.setData('text/plain', w); } ; bank.appendChild(s); });
+  setup.appendChild(bank);
+  drop.ondragover = ev=>ev.preventDefault();
+  drop.ondrop = ev=>{ ev.preventDefault(); const word = ev.dataTransfer.getData('text/plain'); const el = document.createElement('div'); el.className='draggable'; el.textContent = word; el.onclick = ()=>el.remove(); drop.appendChild(el); };
+  document.getElementById('drag-result').textContent='';
+}
+function checkSentence(){ const drop = document.getElementById('dropzone'); const words = Array.from(drop.children).map(x=>x.textContent).join(' '); const correct = sentences[dragIndex].correct; const res = document.getElementById('drag-result'); if(words.trim()===correct){ res.textContent = 'Correct! 🎉'; } else { res.textContent = 'Not correct yet. Correct sentence: ' + correct; } }
+function nextSentence(){ dragIndex = (dragIndex+1)%sentences.length; renderDragSentence(); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
+
+// === MATCH ===
+let matchState={selected:null,score:0};
+function startMatch(){ renderMatch(); }
+function renderMatch(){
+  const area = document.getElementById('match-area'); area.innerHTML='';
+  const left = document.createElement('div'); left.className='match-list';
+  const right = document.createElement('div'); right.className='match-list';
+  const shuffledTr = shuffle(matches.map(x=>x.tr));
+  matches.forEach(m=>{
+    const l = document.createElement('div'); l.className='chip'; l.textContent = m.en; l.onclick = ()=>selectLeft(m.en); left.appendChild(l);
+  });
+  shuffledTr.forEach(t=>{ const r = document.createElement('div'); r.className='chip'; r.textContent=t; r.onclick = ()=>selectRight(t); right.appendChild(r); });
+  const grid = document.createElement('div'); grid.className='match-grid'; grid.appendChild(left); grid.appendChild(right); area.appendChild(grid);
+}
+function selectLeft(en){ matchState.selected = en; }
+function selectRight(tr){ if(!matchState.selected) { alert('Select an English word first'); return; } const pair = matches.find(m=>m.en===matchState.selected && m.tr===tr); if(pair){ alert('Correct 👍'); renderMatch(); } else { alert('Wrong. Try again.'); matchState.selected = null; } }
+
+// Start page default
+// nothing
+
+</script>
+</body>
+</html>
